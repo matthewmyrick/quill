@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	gitBranch "quill-cli/utils/git/branch"
-	gitInit "quill-cli/utils/git/init"
-	gitRepo "quill-cli/utils/git/repo"
+	gitBranch "quill-cli/pkg/git/branch"
+	gitInit "quill-cli/pkg/git/init"
+	gitRepo "quill-cli/pkg/git/repo"
 
 	"github.com/spf13/cobra"
 )

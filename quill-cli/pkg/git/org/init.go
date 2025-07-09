@@ -1,3 +1,3 @@
-package git
+package gitOrg
 
 func init() {}

@@ -1,0 +1,6 @@
+{
+    "name": "Quill CLI Configuration",
+    "description": "Configuration for Quill CLI, including paths for different operating systems.",
+    "version": "1.0.0",
+    "author": "Matthew Myrick"
+}
