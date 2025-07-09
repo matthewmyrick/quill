@@ -1,0 +1,18 @@
+Notebook: My CLI Project
+
+---
+Page: Project Tasks
+Type: tasks
+---
+
+- [x] Design the file structure @done >> 2025-07-08
+- [ ] Implement the parser in Go @important
+- [ ] Write the VS Code extension grammar
+
+---
+Page: Meeting Notes
+Type: notes
+---
+
+# Meeting with Design Team
+We discussed the overall theme for the CLI. The team prefers a minimalist look and feel.
