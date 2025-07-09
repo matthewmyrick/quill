@@ -1,0 +1,3 @@
+package gitBranch
+
+func init() {}

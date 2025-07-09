@@ -1,0 +1,24 @@
+{
+    "name": "Quill CLI Configuration",
+    "description": "Configuration for Quill CLI, including paths for different operating systems.",
+    "version": "1.0.0",
+    "author": "Matthew Myrick",
+    "os-paths": {
+        "default": {
+            "quill-cli-path": "quill-cli",
+            "quill-library-path": "~/.config/quill/library"
+        },
+        "macos": {
+            "quill-cli-path": "/Applications/Quill.app/Contents/MacOS/quill-cli",
+            "quill-library-path": "~/.config/quill/library"
+        },
+        "linux": {
+            "quill-cli-path": "/usr/bin/quill-cli",
+            "quill-library-path": "~/.config/quill/library"
+        },
+        "windows": {
+            "quill-cli-path": "C:\\Program Files\\Quill\\quill-cli.exe",
+            "quill-library-path": "%APPDATA%\\Quill\\library"
+        }
+    }
+}
