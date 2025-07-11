@@ -1,3 +1,0 @@
-package gitInit
-
-func init() {}

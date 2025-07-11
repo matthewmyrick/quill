@@ -1,3 +1,0 @@
-package gitOrg
-
-func init() {}

@@ -16,16 +16,16 @@ func createNotebook(data quillNotebooksTypes.NotebookData) (*quillNotebooksTypes
 		return nil, fmt.Errorf("notebook name and library path cannot be empty")
 	}
 	secretKey := "stephen-curry"
-	currentTime := time.Now()
-	id, err := quillHelpers.GenerateId(secretKey, currentTime)
+
+	id, err := quillHelpers.GenerateId(secretKey, data.Name)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate notebook ID: %w", err)
 	}
 
+	currentTime := time.Now()
 	nb := &quillNotebooksTypes.Notebook{
 		ID:          id,
 		Name:        data.Name,
-		Branch:      data.Branch,
 		Repo:        data.Repo,
 		Org:         data.Org,
 		Tags:        data.Tags,
@@ -36,10 +36,9 @@ func createNotebook(data quillNotebooksTypes.NotebookData) (*quillNotebooksTypes
 
 	// Format the content to be written to the file
 	content := fmt.Sprintf(
-		"type: Notebook\nid: %s\nname: %s\nbranch: %s\nrepo: %s\norg: %s\ntags: [%s]\ncreated: %s\nupdated: %s\ndescription: %s\n",
+		"type: Notebook\nid: %s\nname: %s\nrepo: %s\norg: %s\ntags: [%s]\ncreated: %s\nupdated: %s\ndescription: %s\n",
 		nb.ID,
 		nb.Name,
-		nb.Branch,
 		nb.Repo,
 		nb.Org,
 		strings.Join(nb.Tags, ", "),
@@ -49,7 +48,7 @@ func createNotebook(data quillNotebooksTypes.NotebookData) (*quillNotebooksTypes
 	)
 
 	// Define the file path
-	fileName := fmt.Sprintf("%s-%s.quill", data.Org, data.Repo)
+	fileName := "notebook-" + nb.ID + ".quill"
 	filePath := filepath.Join(data.NotebookPath, fileName)
 
 	fmt.Printf(data.NotebookPath)

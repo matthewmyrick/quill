@@ -6,7 +6,6 @@ import "time"
 type Notebook struct {
 	ID          string
 	Name        string
-	Branch      string
 	Repo        string
 	Org         string
 	Tags        []string
@@ -18,7 +17,6 @@ type Notebook struct {
 // NotebookData holds the arguments for creating a new notebook.
 type NotebookData struct {
 	Name         string
-	Branch       string
 	Repo         string
 	Org          string
 	Description  string

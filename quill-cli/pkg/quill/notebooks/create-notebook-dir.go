@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	gitBranch "quill-cli/pkg/git/branch"
 	gitOrg "quill-cli/pkg/git/org"
 	gitRepo "quill-cli/pkg/git/repo"
 
@@ -19,11 +18,11 @@ func CreateNotebookDir(libraryPath string) (quillNotebooksTypes.Notebook, error)
 		return quillNotebooksTypes.Notebook{}, fmt.Errorf("library path does not exist: %s", libraryPath)
 	}
 
-	notebookDir := libraryPath + "/notebooks"
-	if _, err := os.Stat(notebookDir); os.IsNotExist(err) {
-		err = os.MkdirAll(notebookDir, 0755)
+	notebooksDir := libraryPath + "/notebooks"
+	if _, err := os.Stat(notebooksDir); os.IsNotExist(err) {
+		err = os.MkdirAll(notebooksDir, 0755)
 		if err != nil {
-			return quillNotebooksTypes.Notebook{}, fmt.Errorf("could not create notebooks directory at %s: %w", notebookDir, err)
+			return quillNotebooksTypes.Notebook{}, fmt.Errorf("could not create notebooks directory at %s: %w", notebooksDir, err)
 		}
 	}
 
@@ -39,17 +38,19 @@ func CreateNotebookDir(libraryPath string) (quillNotebooksTypes.Notebook, error)
 		os.Exit(1)
 	}
 
-	branch, err := gitBranch.GetCurrentBranch()
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
-
 	notebookName := fmt.Sprintf("%s-%s", orgName, repoName)
+	notebookDir := fmt.Sprintf("%s/%s", notebooksDir, notebookName)
+
+	// create the notebook data structure
+	if _, err := os.Stat(notebookDir); os.IsNotExist(err) {
+		err = os.MkdirAll(notebookDir, 0755)
+		if err != nil {
+			return quillNotebooksTypes.Notebook{}, fmt.Errorf("could not create notebooks directory at %s: %w", notebookDir, err)
+		}
+	}
 
 	notebookData := quillNotebooksTypes.NotebookData{
 		Name:         notebookName,
-		Branch:       branch,
 		Repo:         repoName,
 		Org:          orgName,
 		NotebookPath: notebookDir,
