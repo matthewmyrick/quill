@@ -5,10 +5,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	gitInit "quill-cli/pkg/git/init"
 )
 
 // GetCurrentBranch reads the branch name from the .git/HEAD file.
-func GetCurrentBranch(gitPath string) (string, error) {
+func GetCurrentBranch() (string, error) {
+	gitPath, err := gitInit.FindGitRoot()
+	if err != nil {
+		return "", err
+	}
 	headFilePath := filepath.Join(gitPath, "HEAD")
 	content, err := os.ReadFile(headFilePath)
 	if err != nil {

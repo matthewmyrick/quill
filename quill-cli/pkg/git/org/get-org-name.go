@@ -1,50 +1,38 @@
 package gitOrg
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
+
+	gitInit "quill-cli/pkg/git/init"
+	gitMeta "quill-cli/pkg/git/meta"
 )
 
 // GetOrgName parses the organization name from the .git/config file.
-func GetOrgName(gitPath string) (string, error) {
-	configFilePath := filepath.Join(gitPath, "config")
-	file, err := os.Open(configFilePath)
+func GetOrgName() (string, error) {
+	gitPath, err := gitInit.FindGitRoot()
 	if err != nil {
-		return "", fmt.Errorf("could not open git config file: %w", err)
+		return "", err
 	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	inRemoteSection := false
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "[remote \"origin\"]" {
-			inRemoteSection = true
-			continue
-		}
-		if inRemoteSection && strings.HasPrefix(line, "url =") {
-			parts := strings.Split(line, "=")
-			if len(parts) < 2 {
-				continue
-			}
-			url := strings.TrimSpace(parts[1])
+	url, err := gitMeta.GetRemoteURL(gitPath)
+	if err != nil {
+		return "", err
+	}
 
-			firstSlash := strings.Index(url, "/")
-			if firstSlash == -1 {
-				continue
-			}
+	var path string
+	if strings.HasPrefix(url, "https://") {
+		path = strings.TrimPrefix(url, "https://")
+		path = strings.TrimPrefix(path, "github.com/")
+	} else if strings.HasPrefix(url, "git@") {
+		path = strings.TrimPrefix(url, "git@github.com:")
+	} else {
+		return "", fmt.Errorf("unsupported git url format: %s", url)
+	}
 
-			orgPart := url[:firstSlash]
-			return orgPart, nil
-		}
-		if inRemoteSection && strings.HasPrefix(line, "[") {
-			break
-		}
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("could not parse organization from path: %s", path)
 	}
-	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("error scanning git config file: %w", err)
-	}
-	return "", fmt.Errorf("could not find remote origin url in git config")
+
+	return parts[0], nil
 }

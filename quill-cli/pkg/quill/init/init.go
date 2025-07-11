@@ -2,14 +2,19 @@ package quillInit
 
 import (
 	"fmt"
-	"os"
+
+	quillNotebooks "quill-cli/pkg/quill/notebooks"
 )
 
-func Initialize() {
-	_, err := createLibraryDirectory()
+func Initialize(libraryPath string) (string, error) {
+	libraryPath, err := createLibraryDirectory(libraryPath)
 	if err != nil {
-		fmt.Println("Error initializing directory:", err)
-		os.Exit(1)
+		return "", fmt.Errorf("error initializing directory: %w", err)
 	}
-	fmt.Println("Quill library directory initialized successfully.")
+
+	_, err = quillNotebooks.CreateNotebookDir(libraryPath)
+	if err != nil {
+		return "", fmt.Errorf("error creating notebook directory: %w", err)
+	}
+	return libraryPath, nil
 }

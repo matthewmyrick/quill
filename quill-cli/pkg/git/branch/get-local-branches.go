@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	gitInit "quill-cli/pkg/git/init"
 )
 
 // GetLocalBranches retrieves all local branches from the git repository.
-func GetLocalBranches(gitPath string) ([]string, error) {
+func GetLocalBranches() ([]string, error) {
+	gitPath, err := gitInit.FindGitRoot()
+	if err != nil {
+		return nil, fmt.Errorf("could not find git root: %w", err)
+	}
 	branches := []string{}
 	branchesPath := filepath.Join(gitPath, "refs", "heads")
 	files, err := os.ReadDir(branchesPath)
