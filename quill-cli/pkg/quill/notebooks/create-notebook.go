@@ -11,7 +11,7 @@ import (
 	quillNotebooksTypes "quill-cli/pkg/quill/notebooks/types"
 )
 
-func createNotebook(data quillNotebooksTypes.NotebookData) (*quillNotebooksTypes.Notebook, error) {
+func CreateNotebook(data quillNotebooksTypes.NotebookData) (*quillNotebooksTypes.Notebook, error) {
 	if data.Name == "" || data.NotebookPath == "" {
 		return nil, fmt.Errorf("notebook name and library path cannot be empty")
 	}
@@ -56,10 +56,11 @@ func createNotebook(data quillNotebooksTypes.NotebookData) (*quillNotebooksTypes
 
 	// Check if file already exists
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
-		return nil, fmt.Errorf("notebook file already exists at %s", filePath)
+		fmt.Println("Notebook file already exists at:", filePath)
+		return nb, nil
 	}
 
-	// Write the file
+	// Create the notebook file
 	err = os.WriteFile(filePath, []byte(content), 0644)
 	if err != nil {
 		return nil, fmt.Errorf("could not write notebook file: %w", err)

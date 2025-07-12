@@ -11,7 +11,7 @@ import (
 	quillPagesTypes "quill-cli/pkg/quill/pages/types"
 )
 
-func createPage(data quillPagesTypes.PageData) (*quillPagesTypes.Page, error) {
+func CreatePage(data quillPagesTypes.PageData) (*quillPagesTypes.Page, error) {
 	if data.Name == "" || data.PagePath == "" {
 		return nil, fmt.Errorf("page name and library path cannot be empty")
 	}

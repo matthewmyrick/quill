@@ -11,15 +11,17 @@ import (
 	quillPageTypes "quill-cli/pkg/quill/pages/types"
 )
 
-func CreatePageDir(libraryPath string) (quillPageTypes.Page, error) {
-	if libraryPath == "" {
-		return quillPageTypes.Page{}, fmt.Errorf("library path cannot be empty")
+func CreatePageDir(notebookPath string) (quillPageTypes.Page, error) {
+	if notebookPath == "" {
+		return quillPageTypes.Page{}, fmt.Errorf("notebook path cannot be empty")
 	}
-	if _, err := os.Stat(libraryPath); os.IsNotExist(err) {
-		return quillPageTypes.Page{}, fmt.Errorf("library path does not exist: %s", libraryPath)
+	if _, err := os.Stat(notebookPath); os.IsNotExist(err) {
+		return quillPageTypes.Page{}, fmt.Errorf("notebook path does not exist: %s", notebookPath)
 	}
 
-	pagesDir := libraryPath + "/pages"
+	pagesDir := notebookPath + "/pages"
+
+	//check if pages directory exists, if not create it
 	if _, err := os.Stat(pagesDir); os.IsNotExist(err) {
 		err = os.MkdirAll(pagesDir, 0755)
 		if err != nil {
@@ -66,7 +68,7 @@ func CreatePageDir(libraryPath string) (quillPageTypes.Page, error) {
 		Tags:        []string{"git-repo", "auto-initialized"},
 	}
 
-	pg, err := createPage(pageData)
+	pg, err := CreatePage(pageData)
 	if err != nil {
 		return quillPageTypes.Page{}, fmt.Errorf("could not create page: %w", err)
 	}

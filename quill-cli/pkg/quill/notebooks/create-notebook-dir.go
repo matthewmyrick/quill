@@ -10,19 +10,19 @@ import (
 	quillNotebooksTypes "quill-cli/pkg/quill/notebooks/types"
 )
 
-func CreateNotebookDir(libraryPath string) (quillNotebooksTypes.Notebook, error) {
+func CreateNotebookDir(libraryPath string) (quillNotebooksTypes.NotebookData, error) {
 	if libraryPath == "" {
-		return quillNotebooksTypes.Notebook{}, fmt.Errorf("library path cannot be empty")
+		return quillNotebooksTypes.NotebookData{}, fmt.Errorf("library path cannot be empty")
 	}
 	if _, err := os.Stat(libraryPath); os.IsNotExist(err) {
-		return quillNotebooksTypes.Notebook{}, fmt.Errorf("library path does not exist: %s", libraryPath)
+		return quillNotebooksTypes.NotebookData{}, fmt.Errorf("library path does not exist: %s", libraryPath)
 	}
 
 	notebooksDir := libraryPath + "/notebooks"
 	if _, err := os.Stat(notebooksDir); os.IsNotExist(err) {
 		err = os.MkdirAll(notebooksDir, 0755)
 		if err != nil {
-			return quillNotebooksTypes.Notebook{}, fmt.Errorf("could not create notebooks directory at %s: %w", notebooksDir, err)
+			return quillNotebooksTypes.NotebookData{}, fmt.Errorf("could not create notebooks directory at %s: %w", notebooksDir, err)
 		}
 	}
 
@@ -38,19 +38,11 @@ func CreateNotebookDir(libraryPath string) (quillNotebooksTypes.Notebook, error)
 		os.Exit(1)
 	}
 
-	notebookName := fmt.Sprintf("%s-%s", orgName, repoName)
-	notebookDir := fmt.Sprintf("%s/%s", notebooksDir, notebookName)
-
-	// create the notebook data structure
-	if _, err := os.Stat(notebookDir); os.IsNotExist(err) {
-		err = os.MkdirAll(notebookDir, 0755)
-		if err != nil {
-			return quillNotebooksTypes.Notebook{}, fmt.Errorf("could not create notebooks directory at %s: %w", notebookDir, err)
-		}
-	}
+	notebookDirName := fmt.Sprintf("%s-%s", orgName, repoName)
+	notebookDir := fmt.Sprintf("%s/%s", notebooksDir, notebookDirName)
 
 	notebookData := quillNotebooksTypes.NotebookData{
-		Name:         notebookName,
+		Name:         notebookDirName,
 		Repo:         repoName,
 		Org:          orgName,
 		NotebookPath: notebookDir,
@@ -58,10 +50,20 @@ func CreateNotebookDir(libraryPath string) (quillNotebooksTypes.Notebook, error)
 		Tags:         []string{"git-repo", "auto-initialized"},
 	}
 
-	nb, err := createNotebook(notebookData)
-	if err != nil {
-		return quillNotebooksTypes.Notebook{}, fmt.Errorf("could not create notebook: %w", err)
+	// Check if the notebook directory already exists
+	if _, err := os.Stat(notebookDir); !os.IsNotExist(err) {
+		fmt.Println("Notebook directory already exists at:", notebookDir)
+		return notebookData, nil
 	}
+	// create the notebook data structure
+	if _, err := os.Stat(notebookDir); os.IsNotExist(err) {
+		err = os.MkdirAll(notebookDir, 0755)
+		if err != nil {
+			return quillNotebooksTypes.NotebookData{}, fmt.Errorf("could not create notebooks directory at %s: %w", notebookDir, err)
+		}
+	}
+	fmt.Println("Notebook directory created successfully at:", notebookDir)
 
-	return *nb, nil
+	return notebookData, nil
+
 }
