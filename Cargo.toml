@@ -1,16 +1,32 @@
 [package]
-name = "quill-todo"
+name = "quill-task"
 version = "0.1.0"
 edition = "2021"
+description = "A Git-context-aware task management TUI with local and MongoDB storage support"
+authors = ["Matthew Myrick <your-email@example.com>"]
+license = "MIT"
+repository = "https://github.com/MatthewMyrick/quill"
+homepage = "https://github.com/MatthewMyrick/quill"
+keywords = ["tui", "task", "git", "productivity", "todo"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "quill"
+path = "src/main.rs"
 
 [dependencies]
-crossterm = "0.27"
-ratatui = "0.26"
+crossterm = "0.29"
+ratatui = "0.29"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
-git2 = "0.18"
+git2 = "0.20.2"
 tokio = { version = "1.0", features = ["full"] }
 anyhow = "1.0"
-dirs = "5.0"
-notify = "6.1"
+dirs = "6.0.0"
+notify = "8.1.0"
+mongodb = "3.2.4"
+bson = { version = "2.9", features = ["chrono-0_4"] }
+async-trait = "0.1"
+atty = "0.2"
+

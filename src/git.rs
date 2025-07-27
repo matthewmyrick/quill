@@ -12,18 +12,36 @@ pub struct GitContext {
 
 impl GitContext {
     pub fn from_current_dir() -> Result<Self> {
-        let repo = Repository::discover(".")?;
-        let workdir = repo.workdir().ok_or_else(|| anyhow!("Not in a git repository"))?;
-        
-        let repo_name = Self::extract_repo_name(workdir)?;
-        let org_name = Self::extract_org_name(&repo)?;
-        let branch_name = Self::get_current_branch(&repo)?;
+        match Repository::discover(".") {
+            Ok(repo) => {
+                let workdir = repo.workdir().ok_or_else(|| anyhow!("Not in a git repository"))?;
+                
+                let repo_name = Self::extract_repo_name(workdir)?;
+                let org_name = Self::extract_org_name(&repo).unwrap_or_else(|_| "local".to_string());
+                let branch_name = Self::get_current_branch(&repo).unwrap_or_else(|_| "main".to_string());
 
-        Ok(GitContext {
-            org: org_name,
-            repo: repo_name,
-            branch: branch_name,
-        })
+                Ok(GitContext {
+                    org: org_name,
+                    repo: repo_name,
+                    branch: branch_name,
+                })
+            }
+            Err(_) => {
+                // Not in a git repository, create a default context
+                let current_dir = std::env::current_dir()?;
+                let dir_name = current_dir
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("quill-tasks")
+                    .to_string();
+                
+                Ok(GitContext {
+                    org: "local".to_string(),
+                    repo: dir_name,
+                    branch: "default".to_string(),
+                })
+            }
+        }
     }
 
     fn extract_repo_name(workdir: &Path) -> Result<String> {
