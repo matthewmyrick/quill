@@ -69,7 +69,7 @@ jobs:
       - name: Prepare binary
         run: |
           mkdir -p release
-          cp target/${{ matrix.target }}/release/quill-task release/${{ matrix.asset_name }}
+          cp target/${{ matrix.target }}/release/quill release/${{ matrix.asset_name }}
           chmod +x release/${{ matrix.asset_name }}
 
       - name: Create tarball
