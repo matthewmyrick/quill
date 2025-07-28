@@ -39,60 +39,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      - name: Build release binary
+        uses: ./.github/actions/build.yml
         with:
-          toolchain: stable
           target: ${{ matrix.target }}
-          override: true
-
-      - name: Install dependencies
-        run: |
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            brew install openssl pkg-config
-            if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
-              # Install Intel Homebrew if it doesn't exist
-              if [ ! -f /usr/local/bin/brew ]; then
-                echo "Installing Intel Homebrew..."
-                arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-              fi
-              # Install x86_64 OpenSSL for Intel builds
-              arch -x86_64 /usr/local/bin/brew install openssl pkg-config
-              OPENSSL_PATH=$(arch -x86_64 /usr/local/bin/brew --prefix openssl)
-              echo "OPENSSL_ROOT_DIR=$OPENSSL_PATH" >> $GITHUB_ENV
-            else
-              # Use ARM64 OpenSSL for Apple Silicon builds
-              echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
-            fi
-          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            sudo apt-get update
-            sudo apt-get install -y pkg-config libssl-dev
-            if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-musl" ]]; then
-              sudo apt-get install -y musl-tools musl-dev
-              # Install static OpenSSL for musl
-              wget -O - https://github.com/openssl/openssl/releases/download/openssl-3.0.15/openssl-3.0.15.tar.gz | tar xzf -
-              cd openssl-3.0.15
-              CC=musl-gcc ./Configure linux-x86_64 no-shared no-async --prefix=/usr/local/musl --openssldir=/usr/local/musl
-              make -j$(nproc)
-              sudo make install_sw
-              cd ..
-              echo "OPENSSL_DIR=/usr/local/musl" >> $GITHUB_ENV
-              echo "OPENSSL_STATIC=1" >> $GITHUB_ENV
-            fi
-          fi
-
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target ${{ matrix.target }}
-        env:
-          # Set OpenSSL paths for macOS
-          OPENSSL_DIR: ${{ env.OPENSSL_ROOT_DIR }}
-          PKG_CONFIG_PATH: ${{ format('{0}/lib/pkgconfig', env.OPENSSL_ROOT_DIR) }}
-          PKG_CONFIG_ALLOW_CROSS: ${{ matrix.target == 'x86_64-apple-darwin' && '1' || '' }}
-          # Set macOS deployment target to match runner version
-          MACOSX_DEPLOYMENT_TARGET: "14.0"
+          release: true
+          run-tests: false
 
       - name: Prepare binary
         run: |
