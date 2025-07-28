@@ -55,6 +55,8 @@ runs:
             # Install static OpenSSL for musl builds
             wget -O - https://github.com/openssl/openssl/releases/download/openssl-3.0.15/openssl-3.0.15.tar.gz | tar xzf -
             cd openssl-3.0.15
+            # Fix musl compatibility: replace linux/mman.h with sys/mman.h
+            sed -i 's|#   include <linux/mman.h>|#   include <sys/mman.h>|g' crypto/mem_sec.c
             CC=musl-gcc ./Configure linux-x86_64 no-shared no-async --prefix=/usr/local/musl --openssldir=/usr/local/musl
             make -j$(nproc)
             sudo make install_sw
