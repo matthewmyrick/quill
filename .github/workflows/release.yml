@@ -97,7 +97,7 @@ jobs:
         with:
           formula-name: quill-task
           formula-path: Formula/quill-task.rb
-          homebrew-tap: MatthewMyrick/homebrew-quill
+          homebrew-tap: MatthewMyrick/quill
           download-url: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/quill-task-x86_64-apple-darwin.tar.gz
           commit-message: |
             Update quill-task to ${{ steps.extract_version.outputs.VERSION }}
