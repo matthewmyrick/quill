@@ -45,7 +45,12 @@ runs:
         elif [[ "${{ runner.os }}" == "Linux" ]]; then
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev
-          if [[ "${{ inputs.target }}" == "x86_64-unknown-linux-musl" ]]; then
+          # Set OpenSSL paths for GNU Linux builds
+          if [[ "${{ inputs.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+            echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
+            echo "OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
+            echo "OPENSSL_INCLUDE_DIR=/usr/include/openssl" >> $GITHUB_ENV
+          elif [[ "${{ inputs.target }}" == "x86_64-unknown-linux-musl" ]]; then
             sudo apt-get install -y musl-tools
             if [[ "${{ inputs.release }}" == "true" ]]; then
               # Install static OpenSSL for musl release builds
