@@ -1,20 +1,20 @@
-name: 'Build Quill'
-description: 'Standardized build process for Quill across CI and release workflows'
+name: "Build Quill"
+description: "Standardized build process for Quill across CI and release workflows"
 inputs:
   target:
-    description: 'Target architecture to build for'
+    description: "Target architecture to build for"
     required: true
   release:
-    description: 'Whether to build in release mode'
+    description: "Whether to build in release mode"
     required: false
-    default: 'false'
+    default: "false"
   run-tests:
-    description: 'Whether to run tests before building'
+    description: "Whether to run tests before building"
     required: false
-    default: 'true'
+    default: "true"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -70,7 +70,7 @@ runs:
               sudo ln -s /usr/local/musl/lib64 /usr/local/musl/lib
             fi
             # Verify installation
-            if [[ ! -d "/usr/local/musl/lib" ]] || [[ ! -f "/usr/local/musl/lib/libssl.a" ]]; then
+            if [[ ! -f "/usr/local/musl/lib/libssl.a" && ! -f "/usr/local/musl/lib64/libssl.a" ]]; then
               echo "OpenSSL installation verification failed"
               ls -la /usr/local/musl/ || true
               ls -la /usr/local/musl/lib/ || true
@@ -112,3 +112,4 @@ runs:
         MACOSX_DEPLOYMENT_TARGET: ${{ runner.os == 'macOS' && '14.0' || '' }}
         # Set OpenSSL static linking for musl
         OPENSSL_STATIC: ${{ env.OPENSSL_STATIC }}
+
