@@ -48,6 +48,8 @@ jobs:
           OPENSSL_DIR: ${{ env.OPENSSL_ROOT_DIR }}
           PKG_CONFIG_PATH: ${{ format('{0}/lib/pkgconfig', env.OPENSSL_ROOT_DIR) }}
           PKG_CONFIG_ALLOW_CROSS: ${{ matrix.target == 'x86_64-apple-darwin' && '1' || '' }}
+          # Set macOS deployment target to match runner version
+          MACOSX_DEPLOYMENT_TARGET: "14.0"
 
       - name: Prepare binary
         run: |
