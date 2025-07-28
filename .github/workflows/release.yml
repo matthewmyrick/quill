@@ -36,7 +36,14 @@ jobs:
       - name: Install OpenSSL (macOS)
         run: |
           brew install openssl pkg-config
-          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
+          if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
+            # Install x86_64 OpenSSL for Intel builds
+            arch -x86_64 /usr/local/bin/brew install openssl || true
+            echo "OPENSSL_ROOT_DIR=/usr/local/opt/openssl" >> $GITHUB_ENV
+          else
+            # Use ARM64 OpenSSL for Apple Silicon builds
+            echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
+          fi
 
       - name: Build
         uses: actions-rs/cargo@v1
