@@ -9,7 +9,6 @@ use app::App;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Check if we're running in a proper terminal
     if !atty::is(atty::Stream::Stdout) {
         eprintln!("Error: This application requires a proper terminal to run.");
         eprintln!("Please run this application from a terminal emulator like:");
