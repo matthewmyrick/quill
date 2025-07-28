@@ -19,15 +19,6 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             asset_name: quill-task-aarch64-apple-darwin
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            asset_name: quill-task-x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            asset_name: quill-task-x86_64-unknown-linux-musl
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            asset_name: quill-task-x86_64-pc-windows-msvc.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -42,23 +33,10 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev pkg-config
-          if [ "${{ matrix.target }}" = "x86_64-unknown-linux-musl" ]; then
-            sudo apt-get install -y musl-tools
-          fi
-
       - name: Install OpenSSL (macOS)
-        if: matrix.os == 'macos-latest'
         run: |
           brew install openssl pkg-config
-          # Install cross-compilation target for OpenSSL
-          if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
-            arch -x86_64 brew install openssl
-          fi
+          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -66,57 +44,30 @@ jobs:
           command: build
           args: --release --target ${{ matrix.target }}
         env:
-          # Set OpenSSL paths for macOS cross-compilation
-          OPENSSL_DIR: ${{ matrix.os == 'macos-latest' && '/opt/homebrew/opt/openssl@3' || (matrix.os == 'ubuntu-latest' && '/usr' || '') }}
-          PKG_CONFIG_PATH: ${{ matrix.os == 'macos-latest' && '/opt/homebrew/opt/openssl@3/lib/pkgconfig' || (matrix.os == 'ubuntu-latest' && '/usr/lib/x86_64-linux-gnu/pkgconfig' || '') }}
-          # For cross-compilation from Apple Silicon to Intel
-          PKG_CONFIG_ALLOW_CROSS: ${{ matrix.os == 'macos-latest' && matrix.target == 'x86_64-apple-darwin' && '1' || '' }}
-          # Linux OpenSSL paths
-          OPENSSL_LIB_DIR: ${{ matrix.os == 'ubuntu-latest' && (matrix.target == 'x86_64-unknown-linux-musl' && '/usr/lib/x86_64-linux-musl' || '/usr/lib/x86_64-linux-gnu') || '' }}
-          OPENSSL_INCLUDE_DIR: ${{ matrix.os == 'ubuntu-latest' && '/usr/include/openssl' || '' }}
-          # Static linking for musl
-          OPENSSL_STATIC: ${{ matrix.target == 'x86_64-unknown-linux-musl' && '1' || '' }}
+          # Set OpenSSL paths for macOS
+          OPENSSL_DIR: ${{ env.OPENSSL_ROOT_DIR }}
+          PKG_CONFIG_PATH: ${{ format('{0}/lib/pkgconfig', env.OPENSSL_ROOT_DIR) }}
+          PKG_CONFIG_ALLOW_CROSS: ${{ matrix.target == 'x86_64-apple-darwin' && '1' || '' }}
 
-      - name: Prepare binary (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Prepare binary
         run: |
           mkdir -p release
           cp target/${{ matrix.target }}/release/quill-task release/${{ matrix.asset_name }}
           chmod +x release/${{ matrix.asset_name }}
 
-      - name: Prepare binary (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir release
-          copy target\${{ matrix.target }}\release\quill-task.exe release\${{ matrix.asset_name }}
-
-      - name: Create tarball (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Create tarball
         run: |
           cd release
           tar -czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.asset_name }}
 
-      - name: Create zip (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          cd release
-          7z a ${{ matrix.asset_name }}.zip ${{ matrix.asset_name }}
-
-      - name: Upload Release Asset (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
           files: ./release/${{ matrix.asset_name }}.tar.gz
 
-      - name: Upload Release Asset (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./release/${{ matrix.asset_name }}.zip
-
   update-homebrew:
     needs: build-and-upload
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Extract version
         id: extract_version
