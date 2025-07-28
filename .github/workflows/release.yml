@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   build-and-upload:
+    environment: production
     strategy:
       matrix:
         include:
@@ -86,7 +87,6 @@ jobs:
   update-homebrew:
     needs: build-and-upload
     runs-on: macos-latest
-    environment: production
     steps:
       - name: Extract version
         id: extract_version
