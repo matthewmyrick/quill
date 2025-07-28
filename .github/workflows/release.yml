@@ -86,13 +86,14 @@ jobs:
   update-homebrew:
     needs: build-and-upload
     runs-on: macos-latest
+    environment: production
     steps:
       - name: Extract version
         id: extract_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Update Homebrew Formula
-        uses: mislav/bump-homebrew-formula@v3
+        uses: mislav/bump-homebrew-formula-action@v3
         with:
           formula-name: quill-task
           formula-path: Formula/quill-task.rb
