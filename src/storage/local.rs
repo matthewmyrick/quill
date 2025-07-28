@@ -158,3 +158,128 @@ impl TaskStorage for LocalTaskStorage {
         Ok(None)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    fn create_test_storage() -> LocalTaskStorage {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("test_todos.json");
+        LocalTaskStorage::new(path.to_string_lossy().to_string()).unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_add_and_get_tasks() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        let id = storage.add_task(context, "Test task".to_string()).await.unwrap();
+        assert_eq!(id, 1);
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].text, "Test task");
+        assert_eq!(tasks[0].id, 1);
+    }
+
+    #[tokio::test]
+    async fn test_toggle_task_status() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        let id = storage.add_task(context, "Test task".to_string()).await.unwrap();
+        
+        let success = storage.toggle_task(context, id).await.unwrap();
+        assert!(success);
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks[0].status, TaskStatus::InProgress);
+        
+        storage.toggle_task(context, id).await.unwrap();
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks[0].status, TaskStatus::Completed);
+    }
+
+    #[tokio::test]
+    async fn test_set_task_status() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        let id = storage.add_task(context, "Test task".to_string()).await.unwrap();
+        
+        let success = storage.set_task_status(context, id, TaskStatus::Completed).await.unwrap();
+        assert!(success);
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks[0].status, TaskStatus::Completed);
+    }
+
+    #[tokio::test]
+    async fn test_remove_and_undo_task() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        let id = storage.add_task(context, "Test task".to_string()).await.unwrap();
+        
+        let success = storage.remove_task(context, id).await.unwrap();
+        assert!(success);
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks.len(), 0);
+        
+        let restored = storage.undo_delete(context).await.unwrap();
+        assert!(restored.is_some());
+        assert_eq!(restored.unwrap().text, "Test task");
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_edit_task() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        let id = storage.add_task(context, "Original task".to_string()).await.unwrap();
+        
+        let success = storage.edit_task(context, id, "Edited task".to_string()).await.unwrap();
+        assert!(success);
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks[0].text, "Edited task");
+    }
+
+    #[tokio::test]
+    async fn test_multiple_contexts() {
+        let mut storage = create_test_storage();
+        let context1 = "test:repo1:main";
+        let context2 = "test:repo2:main";
+        
+        storage.add_task(context1, "Task 1".to_string()).await.unwrap();
+        storage.add_task(context2, "Task 2".to_string()).await.unwrap();
+        
+        let tasks1 = storage.get_tasks(context1).await.unwrap();
+        let tasks2 = storage.get_tasks(context2).await.unwrap();
+        
+        assert_eq!(tasks1.len(), 1);
+        assert_eq!(tasks2.len(), 1);
+        assert_eq!(tasks1[0].text, "Task 1");
+        assert_eq!(tasks2[0].text, "Task 2");
+    }
+
+    #[tokio::test]
+    async fn test_deleted_tasks_limit() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        for i in 1..=5 {
+            let id = storage.add_task(context, format!("Task {}", i)).await.unwrap();
+            storage.remove_task(context, id).await.unwrap();
+        }
+        
+        let deleted_count = storage.deleted_tasks.get(context).map(|d| d.len()).unwrap_or(0);
+        assert_eq!(deleted_count, 3); // Should be limited to 3
+    }
+}

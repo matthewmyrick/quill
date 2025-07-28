@@ -30,3 +30,6 @@ bson = { version = "2.9", features = ["chrono-0_4"] }
 async-trait = "0.1"
 atty = "0.2"
 
+[dev-dependencies]
+tempfile = "3.0"
+

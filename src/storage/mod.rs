@@ -53,3 +53,54 @@ pub trait TaskStorage: Send + Sync {
     async fn edit_task(&mut self, context_key: &str, id: usize, new_text: String) -> Result<bool>;
     async fn undo_delete(&mut self, context_key: &str) -> Result<Option<Task>>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_task_creation() {
+        let task = Task::new(1, "Test task".to_string());
+        assert_eq!(task.id, 1);
+        assert_eq!(task.text, "Test task");
+        assert_eq!(task.status, TaskStatus::NotStarted);
+        assert!(!task.created_at.is_empty());
+    }
+
+    #[test]
+    fn test_task_status_default() {
+        let status = TaskStatus::default();
+        assert_eq!(status, TaskStatus::NotStarted);
+    }
+
+    #[test]
+    fn test_task_is_completed() {
+        let mut task = Task::new(1, "Test task".to_string());
+        assert!(!task.is_completed());
+        
+        task.status = TaskStatus::Completed;
+        assert!(task.is_completed());
+    }
+
+    #[test]
+    fn test_task_serialization() {
+        let task = Task::new(1, "Test task".to_string());
+        let json = serde_json::to_string(&task).unwrap();
+        let deserialized: Task = serde_json::from_str(&json).unwrap();
+        
+        assert_eq!(task.id, deserialized.id);
+        assert_eq!(task.text, deserialized.text);
+        assert_eq!(task.status, deserialized.status);
+    }
+
+    #[test]
+    fn test_task_status_variants() {
+        let not_started = TaskStatus::NotStarted;
+        let in_progress = TaskStatus::InProgress;
+        let completed = TaskStatus::Completed;
+        
+        assert_ne!(not_started, in_progress);
+        assert_ne!(in_progress, completed);
+        assert_ne!(not_started, completed);
+    }
+}

@@ -107,3 +107,66 @@ impl AppConfig {
         self.local_config.path.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_default_config() {
+        let config = AppConfig::default();
+        assert_eq!(config.storage_type, StorageType::Local);
+        assert_eq!(config.local_config.path, "~/.quill/storage/todos.json");
+        assert_eq!(config.mongo_config.database, "quill");
+    }
+
+    #[test]
+    fn test_storage_type_default() {
+        let storage_type = StorageType::default();
+        assert_eq!(storage_type, StorageType::Local);
+    }
+
+    #[test]
+    fn test_expand_local_path_with_tilde() {
+        let mut config = AppConfig::default();
+        config.local_config.path = "~/test/path".to_string();
+        let expanded = config.expand_local_path();
+        assert!(!expanded.starts_with("~"));
+    }
+
+    #[test]
+    fn test_expand_local_path_without_tilde() {
+        let mut config = AppConfig::default();
+        config.local_config.path = "/absolute/path".to_string();
+        let expanded = config.expand_local_path();
+        assert_eq!(expanded, "/absolute/path");
+    }
+
+    #[test]
+    fn test_config_serialization() {
+        let config = AppConfig::default();
+        let json = serde_json::to_string(&config).unwrap();
+        let deserialized: AppConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(config.storage_type, deserialized.storage_type);
+    }
+
+    #[test]
+    fn test_save_and_load_config() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_path = temp_dir.path().join("config.json");
+        
+        std::env::set_var("HOME", temp_dir.path());
+        
+        let mut original_config = AppConfig::default();
+        original_config.mongo_config.database = "test_db".to_string();
+        
+        let config_json = serde_json::to_string_pretty(&original_config).unwrap();
+        fs::create_dir_all(temp_dir.path().join(".quill")).unwrap();
+        fs::write(temp_dir.path().join(".quill/config.json"), config_json).unwrap();
+        
+        let loaded_config = AppConfig::load().unwrap();
+        assert_eq!(loaded_config.mongo_config.database, "test_db");
+    }
+}

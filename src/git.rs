@@ -121,3 +121,76 @@ impl GitContext {
         format!("{}:{}:{}", self.org, self.repo, self.branch)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_git_context_creation() {
+        let context = GitContext {
+            org: "testorg".to_string(),
+            repo: "testrepo".to_string(),
+            branch: "main".to_string(),
+        };
+        
+        assert_eq!(context.org, "testorg");
+        assert_eq!(context.repo, "testrepo");
+        assert_eq!(context.branch, "main");
+    }
+
+    #[test]
+    fn test_context_key() {
+        let context = GitContext {
+            org: "myorg".to_string(),
+            repo: "myrepo".to_string(),
+            branch: "feature".to_string(),
+        };
+        
+        assert_eq!(context.context_key(), "myorg:myrepo:feature");
+    }
+
+    #[test]
+    fn test_parse_github_ssh_url() {
+        let url = "git@github.com:octocat/Hello-World.git";
+        let org = GitContext::parse_org_from_url(url);
+        assert_eq!(org, Some("octocat".to_string()));
+    }
+
+    #[test]
+    fn test_parse_github_https_url() {
+        let url = "https://github.com/octocat/Hello-World.git";
+        let org = GitContext::parse_org_from_url(url);
+        assert_eq!(org, Some("octocat".to_string()));
+    }
+
+    #[test]
+    fn test_parse_invalid_url() {
+        let url = "not-a-git-url";
+        let org = GitContext::parse_org_from_url(url);
+        assert_eq!(org, None);
+    }
+
+    #[test]
+    fn test_git_context_serialization() {
+        let context = GitContext {
+            org: "testorg".to_string(),
+            repo: "testrepo".to_string(),
+            branch: "main".to_string(),
+        };
+        
+        let json = serde_json::to_string(&context).unwrap();
+        let deserialized: GitContext = serde_json::from_str(&json).unwrap();
+        
+        assert_eq!(context, deserialized);
+    }
+
+    #[test]
+    fn test_from_current_dir_fallback() {
+        let context = GitContext::from_current_dir().unwrap();
+        
+        assert!(!context.org.is_empty());
+        assert!(!context.repo.is_empty());
+        assert!(!context.branch.is_empty());
+    }
+}
