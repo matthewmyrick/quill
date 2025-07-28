@@ -39,6 +39,7 @@ jobs:
           override: true
 
       - name: Install dependencies
+        shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             brew install openssl pkg-config
