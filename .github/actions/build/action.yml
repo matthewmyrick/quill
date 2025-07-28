@@ -59,10 +59,19 @@ runs:
             if grep -q "linux/mman.h" crypto/mem_sec.c 2>/dev/null; then
               sed -i 's|#   include <linux/mman.h>|#   include <sys/mman.h>|g' crypto/mem_sec.c
             fi
+            # Create target directory first
+            sudo mkdir -p /usr/local/musl/lib /usr/local/musl/include
             CC=musl-gcc ./Configure linux-x86_64 no-shared no-async no-engine --prefix=/usr/local/musl --openssldir=/usr/local/musl
-            make -j$(nproc)
-            sudo make install_sw
+            make -j$(nproc) || { echo "OpenSSL make failed"; exit 1; }
+            sudo make install_sw || { echo "OpenSSL install failed"; exit 1; }
             cd ..
+            # Verify installation
+            if [[ ! -d "/usr/local/musl/lib" ]] || [[ ! -f "/usr/local/musl/lib/libssl.a" ]]; then
+              echo "OpenSSL installation verification failed"
+              ls -la /usr/local/musl/ || true
+              ls -la /usr/local/musl/lib/ || true
+              exit 1
+            fi
             echo "OPENSSL_DIR=/usr/local/musl" >> $GITHUB_ENV
             echo "OPENSSL_LIB_DIR=/usr/local/musl/lib" >> $GITHUB_ENV
             echo "OPENSSL_INCLUDE_DIR=/usr/local/musl/include" >> $GITHUB_ENV
