@@ -1,50 +1,14 @@
 # Deployment Guide for Quill Task
 
-This guide explains how to deploy Quill Task to Homebrew and manage releases.
+This guide explains how to deploy Quill Task using GitHub releases for direct downloads.
 
 ## Prerequisites
 
-Before you can deploy to Homebrew, you need to complete these one-time setup steps:
+Before you can create releases, ensure you have:
 
-### 1. Create a Homebrew Tap Repository
-
-1. Create a new GitHub repository named `homebrew-quill` (the `homebrew-` prefix is required)
-2. Initialize it with a README
-3. Create the following directory structure:
-   ```
-   homebrew-quill/
-   └── Formula/
-       └── quill-task.rb
-   ```
-
-### 2. Set Up GitHub Secrets
-
-In your main repository (`quill`), add the following GitHub secrets:
-
-1. Go to your repository → Settings → Secrets and Variables → Actions
-2. Add these secrets:
-   - `HOMEBREW_TAP_TOKEN`: A GitHub Personal Access Token with write access to your homebrew tap repository
-
-#### Creating the Personal Access Token:
-
-1. Go to GitHub → Settings → Developer Settings → Personal Access Tokens → Tokens (classic)
-2. Generate a new token with these scopes:
-   - `repo` (Full control of private repositories)
-   - `workflow` (Update GitHub Action workflows)
-3. Copy the token and add it as `HOMEBREW_TAP_TOKEN` secret
-
-### 3. Copy the Homebrew Formula
-
-Copy the `Formula/quill-task.rb` file from this repository to your `homebrew-quill` repository:
-
-```bash
-# In your homebrew-quill repository
-mkdir -p Formula
-cp /path/to/quill/Formula/quill-task.rb Formula/
-git add Formula/quill-task.rb
-git commit -m "Initial Homebrew formula for quill-task"
-git push
-```
+1. **GitHub repository** with proper permissions
+2. **GitHub Actions enabled** in your repository
+3. **Git tags** for versioning
 
 ## Deployment Process
 
@@ -72,11 +36,12 @@ To deploy a new version:
    ```
 
 4. **The GitHub Action will automatically**:
-   - Build binaries for all supported platforms
+   - Build binaries for all supported platforms:
+     - macOS (Intel and Apple Silicon)
+     - Linux (GNU and musl)
+     - Windows
    - Create a GitHub release with the binaries attached
-   - Update the Homebrew formula in your tap repository
-   - Calculate and update the SHA256 hash of the macOS binary
-   - Commit the updated formula to the tap repository
+   - Make the release available for direct download
 
 ### What Happens During Deployment
 
@@ -84,69 +49,67 @@ The GitHub Action workflow (`.github/workflows/release.yml`) performs these step
 
 1. **Create Release**: Creates a GitHub release with the tag name
 2. **Build Binaries**: Compiles for multiple platforms:
-   - macOS (Intel and Apple Silicon)
-   - Linux (GNU and musl)
-   - Windows
+   - `quill-x86_64-apple-darwin.tar.gz` (macOS Intel)
+   - `quill-aarch64-apple-darwin.tar.gz` (macOS Apple Silicon)
+   - `quill-x86_64-unknown-linux-gnu.tar.gz` (Linux GNU)
+   - `quill-x86_64-unknown-linux-musl.tar.gz` (Linux musl)
+   - `quill-x86_64-pc-windows-msvc.exe.zip` (Windows)
 3. **Upload Assets**: Attaches the compiled binaries to the release
-4. **Update Homebrew**: Updates the formula in your tap repository with:
-   - New version number
-   - Updated download URL
-   - Calculated SHA256 hash
 
-### Manual Homebrew Updates (if needed)
-
-If the automatic Homebrew update fails, you can manually update the formula:
-
-1. Download the macOS binary from the release
-2. Calculate its SHA256:
-   ```bash
-   shasum -a 256 quill-task-x86_64-apple-darwin.tar.gz
-   ```
-3. Update `Formula/quill-task.rb` in your homebrew tap repository:
-   ```ruby
-   class QuillTask < Formula
-     desc "Git-context-aware task management TUI"
-     homepage "https://github.com/MatthewMyrick/quill"
-     url "https://github.com/MatthewMyrick/quill/releases/download/v0.2.0/quill-task-x86_64-apple-darwin.tar.gz"
-     sha256 "new_calculated_sha256_here"
-     version "0.2.0"
-     
-     # ... rest of the formula
-   end
-   ```
-
-## Testing the Homebrew Installation
+### Testing the Release
 
 After deployment, test the installation:
 
 ```bash
-# Add your tap (first time only)
-brew tap MatthewMyrick/quill
+# Download the appropriate binary for your platform
+curl -L -o quill.tar.gz "https://github.com/MatthewMyrick/quill/releases/latest/download/quill-$(uname -m)-apple-darwin.tar.gz"
 
-# Install or upgrade
-brew install quill-task
-# or
-brew upgrade quill-task
+# Extract and test
+tar -xzf quill.tar.gz
+./quill-* --help
+```
 
-# Test the installation
-quill --help
+## Supported Platforms
+
+The automated build creates binaries for:
+
+- **macOS**: Intel (x86_64) and Apple Silicon (aarch64)
+- **Linux**: GNU and musl libc variants
+- **Windows**: 64-bit executable
+
+## Installation for Users
+
+Once deployed, users can install quill-task by:
+
+1. **Downloading** from the [releases page](https://github.com/MatthewMyrick/quill/releases)
+2. **Extracting** the appropriate archive for their platform
+3. **Moving** the binary to their PATH (e.g., `/usr/local/bin/`)
+4. **Running** `quill` to start the task manager
+
+### Quick Install Script (macOS/Linux)
+
+```bash
+curl -L -o /tmp/quill.tar.gz "https://github.com/MatthewMyrick/quill/releases/latest/download/quill-$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]').tar.gz"
+tar -xzf /tmp/quill.tar.gz -C /tmp
+sudo mv /tmp/quill-* /usr/local/bin/quill
+chmod +x /usr/local/bin/quill
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **SHA256 Mismatch**: The automatic SHA256 calculation failed
-   - Solution: Manually calculate and update the SHA256 in the formula
+1. **Build Failures**: Check the GitHub Actions logs for specific errors
+   - Ensure all dependencies are properly configured
+   - Verify Rust toolchain compatibility
 
-2. **GitHub Action Fails**: Check the workflow logs for specific errors
-   - Ensure all secrets are properly set
-   - Verify the tap repository exists and is accessible
+2. **Binary Not Executable**: 
+   - Ensure proper permissions: `chmod +x quill`
+   - Check if the binary is for the correct platform
 
-3. **Homebrew Install Fails**: 
-   - Check that the binary URL is accessible
-   - Verify the SHA256 matches
-   - Ensure the binary is executable
+3. **Missing Dependencies**: 
+   - Linux users may need `libssl-dev` or `openssl-dev`
+   - Ensure all system dependencies are installed
 
 ### Release Rollback
 
@@ -158,7 +121,7 @@ If you need to rollback a release:
    git push origin :refs/tags/v0.2.0
    ```
 2. Delete the GitHub release from the web interface
-3. Revert the Homebrew formula to the previous version
+3. Create a new tag with the corrected version
 
 ## Version Strategy
 
@@ -169,19 +132,9 @@ Follow semantic versioning:
 
 Always update the version in `Cargo.toml` before creating a release tag.
 
-## Users Can Install With:
+## Binary Naming
 
-Once deployed, users can install quill-task with:
-
-```bash
-# Add the tap
-brew tap MatthewMyrick/quill
-
-# Install the application
-brew install quill-task
-
-# Use the application
-quill
-```
-
-The Homebrew formula installs the binary as `quill` (not `quill-task`) for a better user experience.
+The GitHub Actions workflow creates platform-specific archives containing the `quill` binary:
+- Archives are named with platform information (e.g., `quill-x86_64-apple-darwin.tar.gz`)
+- The binary inside is always named `quill` for consistent user experience
+- Users can run the application with the simple `quill` command after installation

@@ -14,14 +14,20 @@ A context-aware terminal task manager built in Rust that automatically organizes
 
 ## Installation
 
-### Homebrew (macOS/Linux) - Recommended
+### Cargo Install (Recommended)
+
+The easiest way to install Quill Task is using Cargo:
 
 ```bash
-# Add the tap
-brew tap MatthewMyrick/quill
+# Install directly from GitHub
+cargo install --git https://github.com/MatthewMyrick/quill
+```
 
-# Install quill-task
-brew install quill-task
+This will download, compile, and install the `quill` binary to your Cargo bin directory (usually `~/.cargo/bin/`). Make sure this directory is in your PATH.
+
+To update to the latest version:
+```bash
+cargo install --git https://github.com/MatthewMyrick/quill --force
 ```
 
 ### Download Pre-built Binaries
@@ -29,11 +35,28 @@ brew install quill-task
 Download the latest release for your platform from the [GitHub releases page](https://github.com/MatthewMyrick/quill/releases).
 
 Available platforms:
-- macOS (Intel): `quill-task-x86_64-apple-darwin.tar.gz`
-- macOS (Apple Silicon): `quill-task-aarch64-apple-darwin.tar.gz`
-- Linux (x86_64): `quill-task-x86_64-unknown-linux-gnu.tar.gz`
-- Linux (musl): `quill-task-x86_64-unknown-linux-musl.tar.gz`
-- Windows (x86_64): `quill-task-x86_64-pc-windows-msvc.zip`
+- **macOS (Intel)**: `quill-x86_64-apple-darwin.tar.gz`
+- **macOS (Apple Silicon)**: `quill-aarch64-apple-darwin.tar.gz`
+- **Linux (GNU)**: `quill-x86_64-unknown-linux-gnu.tar.gz`
+- **Linux (musl)**: `quill-x86_64-unknown-linux-musl.tar.gz`
+- **Windows**: `quill-x86_64-pc-windows-msvc.exe.zip`
+
+#### Quick Install Script
+
+**macOS/Linux:**
+```bash
+# Download and install the latest version
+curl -L -o /tmp/quill.tar.gz "https://github.com/MatthewMyrick/quill/releases/latest/download/quill-$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]').tar.gz"
+tar -xzf /tmp/quill.tar.gz -C /tmp
+sudo mv /tmp/quill-* /usr/local/bin/quill
+chmod +x /usr/local/bin/quill
+```
+
+**Manual Installation:**
+1. Download the appropriate binary for your platform
+2. Extract the archive: `tar -xzf quill-*.tar.gz` (or unzip for Windows)
+3. Move the binary to a directory in your PATH (e.g., `/usr/local/bin/` on macOS/Linux)
+4. Make it executable: `chmod +x /path/to/quill` (macOS/Linux only)
 
 ### Build from Source
 
@@ -49,18 +72,20 @@ cd quill
 cargo build --release
 ```
 
-The binary will be available at `target/release/quill-task`.
+The binary will be available at `target/release/quill`. You can copy it to your PATH:
+
+```bash
+# Copy to your PATH (optional)
+sudo cp target/release/quill /usr/local/bin/quill
+```
 
 ## Usage
 
 ### Basic Commands
 
 ```bash
-# Start the task manager (if installed via Homebrew)
+# Start the task manager
 quill
-
-# Or if using the binary directly
-quill-task
 ```
 
 ### Keyboard Shortcuts
