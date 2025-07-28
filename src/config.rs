@@ -155,18 +155,25 @@ mod tests {
     #[test]
     fn test_save_and_load_config() {
         let temp_dir = TempDir::new().unwrap();
-        let config_path = temp_dir.path().join("config.json");
         
+        // Set HOME environment variable and ensure it's used
+        let original_home = std::env::var("HOME").ok();
         std::env::set_var("HOME", temp_dir.path());
         
         let mut original_config = AppConfig::default();
         original_config.mongo_config.database = "test_db".to_string();
         
-        let config_json = serde_json::to_string_pretty(&original_config).unwrap();
-        fs::create_dir_all(temp_dir.path().join(".quill")).unwrap();
-        fs::write(temp_dir.path().join(".quill/config.json"), config_json).unwrap();
+        // Save the config using the save method
+        original_config.save().unwrap();
         
         let loaded_config = AppConfig::load().unwrap();
         assert_eq!(loaded_config.mongo_config.database, "test_db");
+        
+        // Restore original HOME if it existed
+        if let Some(home) = original_home {
+            std::env::set_var("HOME", home);
+        } else {
+            std::env::remove_var("HOME");
+        }
     }
 }
