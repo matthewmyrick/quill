@@ -17,11 +17,9 @@ runs:
   using: "composite"
   steps:
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        target: ${{ inputs.target }}
-        override: true
+        targets: ${{ inputs.target }}
 
     - name: Install dependencies
       shell: bash
@@ -86,10 +84,8 @@ runs:
 
     - name: Run tests
       if: inputs.run-tests == 'true'
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: --target ${{ inputs.target }}
+      shell: bash
+      run: cargo test --target ${{ inputs.target }}
       env:
         # Set OpenSSL paths for macOS
         OPENSSL_DIR: ${{ runner.os == 'macOS' && env.OPENSSL_ROOT_DIR || env.OPENSSL_DIR }}
@@ -99,10 +95,8 @@ runs:
         MACOSX_DEPLOYMENT_TARGET: ${{ runner.os == 'macOS' && '14.0' || '' }}
 
     - name: Build
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: ${{ inputs.release == 'true' && '--release' || '' }} --target ${{ inputs.target }}
+      shell: bash
+      run: cargo build ${{ inputs.release == 'true' && '--release' || '' }} --target ${{ inputs.target }}
       env:
         # Set OpenSSL paths for macOS
         OPENSSL_DIR: ${{ runner.os == 'macOS' && env.OPENSSL_ROOT_DIR || env.OPENSSL_DIR }}

@@ -157,6 +157,32 @@ impl TaskStorage for LocalTaskStorage {
         }
         Ok(None)
     }
+
+    async fn move_task_up(&mut self, context_key: &str, id: usize) -> Result<bool> {
+        if let Some(tasks) = self.contexts.get_mut(context_key) {
+            if let Some(pos) = tasks.iter().position(|t| t.id == id) {
+                if pos > 0 {
+                    tasks.swap(pos, pos - 1);
+                    self.save()?;
+                    return Ok(true);
+                }
+            }
+        }
+        Ok(false)
+    }
+
+    async fn move_task_down(&mut self, context_key: &str, id: usize) -> Result<bool> {
+        if let Some(tasks) = self.contexts.get_mut(context_key) {
+            if let Some(pos) = tasks.iter().position(|t| t.id == id) {
+                if pos < tasks.len() - 1 {
+                    tasks.swap(pos, pos + 1);
+                    self.save()?;
+                    return Ok(true);
+                }
+            }
+        }
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -281,5 +307,51 @@ mod tests {
         
         let deleted_count = storage.deleted_tasks.get(context).map(|d| d.len()).unwrap_or(0);
         assert_eq!(deleted_count, 3); // Should be limited to 3
+    }
+
+    #[tokio::test]
+    async fn test_move_task_up() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        let id1 = storage.add_task(context, "Task 1".to_string()).await.unwrap();
+        let id2 = storage.add_task(context, "Task 2".to_string()).await.unwrap();
+        let id3 = storage.add_task(context, "Task 3".to_string()).await.unwrap();
+        
+        // Move task 2 up (should swap with task 1)
+        let success = storage.move_task_up(context, id2).await.unwrap();
+        assert!(success);
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks[0].text, "Task 2");
+        assert_eq!(tasks[1].text, "Task 1");
+        assert_eq!(tasks[2].text, "Task 3");
+        
+        // Try to move first task up (should fail)
+        let success = storage.move_task_up(context, id2).await.unwrap();
+        assert!(!success);
+    }
+
+    #[tokio::test]
+    async fn test_move_task_down() {
+        let mut storage = create_test_storage();
+        let context = "test:repo:main";
+        
+        let id1 = storage.add_task(context, "Task 1".to_string()).await.unwrap();
+        let id2 = storage.add_task(context, "Task 2".to_string()).await.unwrap();
+        let id3 = storage.add_task(context, "Task 3".to_string()).await.unwrap();
+        
+        // Move task 2 down (should swap with task 3)
+        let success = storage.move_task_down(context, id2).await.unwrap();
+        assert!(success);
+        
+        let tasks = storage.get_tasks(context).await.unwrap();
+        assert_eq!(tasks[0].text, "Task 1");
+        assert_eq!(tasks[1].text, "Task 3");
+        assert_eq!(tasks[2].text, "Task 2");
+        
+        // Try to move last task down (should fail)
+        let success = storage.move_task_down(context, id2).await.unwrap();
+        assert!(!success);
     }
 }

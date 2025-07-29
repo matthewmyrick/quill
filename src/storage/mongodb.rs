@@ -282,4 +282,58 @@ impl TaskStorage for MongoTaskStorage {
             Ok(None)
         }
     }
+
+    async fn move_task_up(&mut self, context_key: &str, id: usize) -> Result<bool> {
+        // Get all tasks for this context, sorted by task_id
+        let tasks = self.get_tasks(context_key).await?;
+        
+        // Find the position of the task to move
+        if let Some(pos) = tasks.iter().position(|t| t.id == id) {
+            if pos > 0 {
+                // Swap the task_ids to change order
+                let current_task_id = tasks[pos].id;
+                let prev_task_id = tasks[pos - 1].id;
+                
+                // Update both tasks with swapped IDs
+                let filter1 = doc! { "context_key": context_key, "task_id": current_task_id as i64 };
+                let update1 = doc! { "$set": { "task_id": prev_task_id as i64 } };
+                
+                let filter2 = doc! { "context_key": context_key, "task_id": prev_task_id as i64 };
+                let update2 = doc! { "$set": { "task_id": current_task_id as i64 } };
+                
+                let result1 = self.collection.update_one(filter1, update1).await?;
+                let result2 = self.collection.update_one(filter2, update2).await?;
+                
+                return Ok(result1.modified_count > 0 && result2.modified_count > 0);
+            }
+        }
+        Ok(false)
+    }
+
+    async fn move_task_down(&mut self, context_key: &str, id: usize) -> Result<bool> {
+        // Get all tasks for this context, sorted by task_id
+        let tasks = self.get_tasks(context_key).await?;
+        
+        // Find the position of the task to move
+        if let Some(pos) = tasks.iter().position(|t| t.id == id) {
+            if pos < tasks.len() - 1 {
+                // Swap the task_ids to change order
+                let current_task_id = tasks[pos].id;
+                let next_task_id = tasks[pos + 1].id;
+                
+                // Update both tasks with swapped IDs
+                let filter1 = doc! { "context_key": context_key, "task_id": current_task_id as i64 };
+                let update1 = doc! { "$set": { "task_id": next_task_id as i64 } };
+                
+                let filter2 = doc! { "context_key": context_key, "task_id": next_task_id as i64 };
+                let update2 = doc! { "$set": { "task_id": current_task_id as i64 } };
+                
+                let result1 = self.collection.update_one(filter1, update1).await?;
+                let result2 = self.collection.update_one(filter2, update2).await?;
+                
+                return Ok(result1.modified_count > 0 && result2.modified_count > 0);
+            }
+        }
+        Ok(false)
+    }
 }

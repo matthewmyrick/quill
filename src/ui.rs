@@ -302,7 +302,7 @@ impl TaskUI {
         f.render_stateful_widget(list, chunks[1], &mut self.list_state);
 
         // Footer
-        let footer_text = "Press 'a' to add, 'e' to edit (not completed), 'd' to delete, 'u' to undo delete, Space to cycle status, '1'=Not Started, '2'=In Progress, '3'=Completed, 'c' for config, 'q' to quit";
+        let footer_text = "Press 'a' to add, 'e' to edit (not completed), 'd' to delete, 'u' to undo delete, Space to cycle status, '1'=Not Started, '2'=In Progress, '3'=Completed, Ctrl+↑/↓ to move tasks, 'c' for config, 'q' to quit";
         let footer = Paragraph::new(footer_text)
             .block(Block::default().borders(Borders::ALL))
             .wrap(Wrap { trim: true });

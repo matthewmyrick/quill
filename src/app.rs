@@ -6,7 +6,7 @@ use crate::{
 };
 use anyhow::Result;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -143,7 +143,7 @@ impl App {
                     if key.kind == KeyEventKind::Press {
                         match self.ui.input_mode {
                             InputMode::Normal => {
-                                if self.handle_normal_input(key.code).await? {
+                                if self.handle_normal_input(key.code, key.modifiers).await? {
                                     break;
                                 }
                             }
@@ -176,7 +176,7 @@ impl App {
         Ok(())
     }
 
-    async fn handle_normal_input(&mut self, key: KeyCode) -> Result<bool> {
+    async fn handle_normal_input(&mut self, key: KeyCode, modifiers: KeyModifiers) -> Result<bool> {
         let tasks = self.storage.get_tasks(&self.current_context.context_key()).await?;
         
         match key {
@@ -188,10 +188,38 @@ impl App {
                 self.ui.start_storage_config(&self.config);
             }
             KeyCode::Down | KeyCode::Char('j') => {
-                self.ui.select_next(&tasks);
+                if modifiers.contains(KeyModifiers::CONTROL) {
+                    // Move task down with Ctrl+Down or Ctrl+j
+                    if let Some(selected) = self.ui.list_state.selected() {
+                        if let Some(task) = tasks.get(selected) {
+                            if self.storage.move_task_down(&self.current_context.context_key(), task.id).await? {
+                                // Adjust selection to follow the moved task
+                                if selected < tasks.len() - 1 {
+                                    self.ui.list_state.select(Some(selected + 1));
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    self.ui.select_next(&tasks);
+                }
             }
             KeyCode::Up | KeyCode::Char('k') => {
-                self.ui.select_previous(&tasks);
+                if modifiers.contains(KeyModifiers::CONTROL) {
+                    // Move task up with Ctrl+Up or Ctrl+k
+                    if let Some(selected) = self.ui.list_state.selected() {
+                        if let Some(task) = tasks.get(selected) {
+                            if self.storage.move_task_up(&self.current_context.context_key(), task.id).await? {
+                                // Adjust selection to follow the moved task
+                                if selected > 0 {
+                                    self.ui.list_state.select(Some(selected - 1));
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    self.ui.select_previous(&tasks);
+                }
             }
             KeyCode::Char(' ') => {
                 if let Some(selected) = self.ui.list_state.selected() {

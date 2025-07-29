@@ -52,6 +52,8 @@ pub trait TaskStorage: Send + Sync {
     async fn remove_task(&mut self, context_key: &str, id: usize) -> Result<bool>;
     async fn edit_task(&mut self, context_key: &str, id: usize, new_text: String) -> Result<bool>;
     async fn undo_delete(&mut self, context_key: &str) -> Result<Option<Task>>;
+    async fn move_task_up(&mut self, context_key: &str, id: usize) -> Result<bool>;
+    async fn move_task_down(&mut self, context_key: &str, id: usize) -> Result<bool>;
 }
 
 #[cfg(test)]
